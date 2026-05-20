@@ -288,7 +288,6 @@ int16_t Cx = 0, Cy = 0;
 int16_t Dx = 0, Dy = 0;
 int16_t Rx = 0, Ry = 0;
 int16_t top_error, down_error;
-extern float Ang1, Ang2, AngFlag;
 extern float Angle1, Angle2;
 
 void Usart2_init(u32 bound)

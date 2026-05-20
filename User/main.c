@@ -6,18 +6,15 @@ static FSM_Context_t g_fsm; // 有限状态机上下文
 
 int Base_Speed = 900;
 
-float Lateral_Coeff;         // 横移刹车系数
-float Lateral_Offset;        // 横移刹车偏置
-float Forward_Coeff;         // 直进刹车系数
-float Forward_Offset;        // 直进刹车偏置
+float Lateral_Coeff;  // 横移刹车系数
+float Lateral_Offset; // 横移刹车偏置
+float Forward_Coeff;  // 直进刹车系数
+float Forward_Offset; // 直进刹车偏置
+
 int Reverse_Speed = -600;    // 后退车速
 int Reverse_Distance = 4580; // 后退距离
 int Brake_Distance = 220;    // 左右超声波刹车距离
-short gx;
-short gy;
-short gz;
 
-float AngFlag;
 float pitch;
 float roll;
 float yaw;
