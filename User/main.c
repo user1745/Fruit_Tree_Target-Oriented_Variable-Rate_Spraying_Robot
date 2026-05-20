@@ -1,19 +1,18 @@
 #include "sys.h"
 
-u16 key = 0;
 static int KEY = 0;
 
-static FSM_Context_t g_fsm; // 有限状态机上下文（替代原 flag1~flag26）
+static FSM_Context_t g_fsm; // 有限状态机上下文
 
 int Base_Speed = 900;
 
-float A;                     // 右进垄道——刹车系数
-float a;                     // 右进垄道——刹车系数
-float B;                     // 直进垄道——刹车系数
-float b;                     // 直进垄道——刹车系数
+float Lateral_Coeff;         // 横移刹车系数
+float Lateral_Offset;        // 横移刹车偏置
+float Forward_Coeff;         // 直进刹车系数
+float Forward_Offset;        // 直进刹车偏置
 int Reverse_Speed = -600;    // 后退车速
-int Reverse_Distance = 4580; // 后退垄道距离
-int Brake_Distance = 220;              // 左右超声波刹车距离
+int Reverse_Distance = 4580; // 后退距离
+int Brake_Distance = 220;    // 左右超声波刹车距离
 short gx;
 short gy;
 short gz;
@@ -42,15 +41,12 @@ int main(void)
     Motor_Init();
     Encoder_Init();
     Ultrasonic_Init();
-    FSM_Init(&g_fsm); // 初始化有限状态机
 
-    OLED_Show3FNum(22, 12, UL_Dis.Forward, 5, 3, 12);
-    OLED_Refresh_Gram();
+    FSM_Init(&g_fsm); // 初始化有限状态机
 
     while (1)
     {
-        key = KEY_Scan(0);
-        switch (key)
+        switch (KEY_Scan(0))
         {
         case KEY2_PRES:
             KEY = 1;
@@ -78,28 +74,30 @@ int main(void)
 
         mpu_dmp_get_data(&pitch, &roll, &yaw);
         Wz = ControlPID1(yaw);
+        Read_Encoder_cnt();
+        Ultrasonic_Get_Distance();
 
         OLED_Show3FNum(0, 52, Reverse_Distance, 4, 1, 12);
         OLED_Show3FNum(62, 52, Brake_Distance, 4, 1, 12);
+
         OLED_Show3FNum(22, 0, yaw, 3, 3, 12);
+
         OLED_Show3FNum(22, 12, UL_Dis.Forward, 5, 3, 12);
         OLED_Show3FNum(0, 22, UL_Dis.Left, 3, 3, 12);
         OLED_Show3FNum(60, 22, UL_Dis.Right, 4, 3, 12);
 
-        OLED_ShowNum(0, 32, (int)g_fsm.current, 2, 12); // 显示当前FSM状态编号（替代原flag1~flag26）
-        OLED_Refresh_Gram();
+        OLED_ShowNum(0, 32, (int)g_fsm.current, 2, 12); // 显示当前FSM状态编号
 
-        Read_Encoder_cnt();
-        Ultrasonic_Get_Distance();
+        OLED_Refresh_Gram();
 
         /*
         *********************************************************************************************************************************
-        *                                              FSM 状态机调度（替代原深层嵌套 if-else 逻辑）
+        *                                              FSM 状态机调度
         *********************************************************************************************************************************
         */
         if (KEY == 1)
         {
-            FSM_Update(&g_fsm, &Base_Speed, &A, &a, &B, &b, Reverse_Speed, Reverse_Distance, Brake_Distance, Wz, &Vx1, &Vx2);
+            FSM_Update(&g_fsm, &Base_Speed, &Lateral_Coeff, &Lateral_Offset, &Forward_Coeff, &Forward_Offset, Reverse_Speed, Reverse_Distance, Brake_Distance, Wz, &Vx1, &Vx2);
         }
     }
 }
