@@ -1,10 +1,10 @@
-﻿#include "sys.h"
+#include "sys.h"
 #include "FSM.h"
 
 // static float Vy1; // Vy为正，前进；Vy为负，后退
 // static float Vy2; // Vy为正，前进；Vy为负，后退
-static float Vx1 = 0.0f; // Vx设正，1、4轮子为负，2、3轮子为正，小车左移
-static float Vx2 = 0.0f; // Vx设正，1、4轮子为负，2、3轮子为正，小车左移
+float Vx1 = 0.0f; // Vx设正，1、4轮子为负，2、3轮子为正，小车左移
+float Vx2 = 0.0f; // Vx设正，1、4轮子为负，2、3轮子为正，小车左移
 
 /**
  * @brief 状态转移：更新 ctx->previous / ctx->current，重置编码器
@@ -111,6 +111,10 @@ void FSM_Update(FSM_Context_t *ctx,
                 int Reverse_Speed, int Reverse_Distance, int Brake_Distance,
                 float Wz)
 {
+    static float Vx1_val = 0.0f;
+    static float Vx2_val = 0.0f;
+    float *Vx1 = &Vx1_val;
+    float *Vx2 = &Vx2_val;
     static int CNT;
     CNT = myabs(Encoders.cntC);
     switch (ctx->current)

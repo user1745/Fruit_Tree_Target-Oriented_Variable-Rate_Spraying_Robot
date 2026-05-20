@@ -1,13 +1,11 @@
 #include "sys.h"
 
-static FSM_Context_t g_fsm = {STATE_IDLE, STATE_IDLE}; // 有限状态机上下文
-
 int main(void)
 {
 
     u8 KEY = 0;
 
-    int Base_Speed = 900;
+    int Base_Speed = 900; // 基础速度
 
     int Reverse_Speed = -600;    // 后退车速
     int Reverse_Distance = 4580; // 后退距离
@@ -22,7 +20,9 @@ int main(void)
     float Forward_Coeff = 1.0f;  // 直进刹车系数
     float Forward_Offset = 0.0f; // 直进刹车偏置
 
-    float Wz = 0.0f;  // 角度
+    float Wz = 0.0f; // 航向角 PID 输出
+
+    FSM_Context_t g_fsm = {STATE_IDLE, STATE_IDLE}; // 有限状态机上下文
 
     Delay_init(168);
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
@@ -40,30 +40,33 @@ int main(void)
 
     while (1)
     {
-        switch (KEY_Scan(0))
+        if (KEY == 0) // 按下一次后就不再检测
         {
-        case KEY2_PRES:
-            KEY = 1;
-            break;
+            switch (KEY_Scan(0))
+            {
+            case KEY2_PRES:
+                KEY = 1;
+                break;
 
-        case KEY3_PRES:
-            Reverse_Distance = Reverse_Distance + 100;
-            break;
+            case KEY3_PRES:
+                Reverse_Distance = Reverse_Distance + 100;
+                break;
 
-        case KEY4_PRES:
-            Reverse_Distance = Reverse_Distance - 100;
-            break;
+            case KEY4_PRES:
+                Reverse_Distance = Reverse_Distance - 100;
+                break;
 
-        case KEY5_PRES:
-            Brake_Distance = Brake_Distance + 20;
-            break;
+            case KEY5_PRES:
+                Brake_Distance = Brake_Distance + 20;
+                break;
 
-        case KEY6_PRES:
-            Brake_Distance = Brake_Distance - 20;
-            break;
+            case KEY6_PRES:
+                Brake_Distance = Brake_Distance - 20;
+                break;
 
-        default:
-            break;
+            default:
+                break;
+            }
         }
 
         mpu_dmp_get_data(&pitch, &roll, &yaw);
