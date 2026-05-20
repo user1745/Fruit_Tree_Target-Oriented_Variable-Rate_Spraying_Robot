@@ -5,8 +5,6 @@ int main(void)
 
     u8 KEY = 0;
 
-    int Base_Speed = 900; // 基础速度
-
     int Reverse_Speed = -600;    // 后退车速
     int Reverse_Distance = 4580; // 后退距离
     int Brake_Distance = 220;    // 左右超声波刹车距离
@@ -14,11 +12,6 @@ int main(void)
     float pitch = 0.0f;
     float roll = 0.0f;
     float yaw = 0.0f;
-
-    float Lateral_Coeff = 1.0f;  // 横移刹车系数
-    float Lateral_Offset = 0.0f; // 横移刹车偏置
-    float Forward_Coeff = 1.0f;  // 直进刹车系数
-    float Forward_Offset = 0.0f; // 直进刹车偏置
 
     float Wz = 0.0f; // 航向角 PID 输出
 
@@ -95,7 +88,7 @@ int main(void)
         */
         if (KEY == 1)
         {
-            FSM_Update(&g_fsm, &Base_Speed, &Lateral_Coeff, &Lateral_Offset, &Forward_Coeff, &Forward_Offset, Reverse_Speed, Reverse_Distance, Brake_Distance, Wz);
+            FSM_Update(&g_fsm, Reverse_Speed, Reverse_Distance, Brake_Distance, Wz);
         }
     }
 }

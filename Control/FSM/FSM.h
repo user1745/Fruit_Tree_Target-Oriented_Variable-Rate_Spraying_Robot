@@ -58,20 +58,12 @@ void FSM_Init(FSM_Context_t *ctx);
  *         内部根据 ctx->current 执行当前状态的动作，
  *         并在满足转移条件时切换到下一状态。
  * @param  ctx                 FSM 上下文指针
- * @param  Base_Speed          基础速度
- * @param  Lateral_Coeff       横移刹车系数
- * @param  Lateral_Offset      横移刹车偏置
- * @param  Forward_Coeff       直进刹车系数
- * @param  Forward_Offset      直进刹车偏置
  * @param  Reverse_Speed       后退速度
  * @param  Reverse_Distance    后退距离
  * @param  Brake_Distance      左右超声波刹车距离
  * @param  Wz                  航向角 PID 输出
  */
 void FSM_Update(FSM_Context_t *ctx,
-                int *Base_Speed,
-                float *Lateral_Coeff, float *Lateral_Offset,
-                float *Forward_Coeff, float *Forward_Offset,
                 int Reverse_Speed, int Reverse_Distance, int Brake_Distance,
                 float Wz);
 
