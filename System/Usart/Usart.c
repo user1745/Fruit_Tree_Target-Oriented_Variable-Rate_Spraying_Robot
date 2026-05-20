@@ -391,11 +391,9 @@ void USART2_IRQHandler(void)
 				USART_ITConfig(USART2, USART_IT_RXNE, DISABLE); // 关闭DTSABLE中断
 				if (RxFlag1)
 				{
-					AngFlag = 0;
 					// 计算偏差，被减数是openmv所设置的分辨率中的w或h的二分之一，也就是计算到色块到中心的坐标偏差。IDE右侧帧缓冲区的下方文字有写。
 					down_error = Rx - Dx;
 					top_error = Ry - Dy;
-					AngFlag = 1;
 					RxFlag1 = 0;
 					RxCounter1 = 0;
 					RxState = 0;
