@@ -107,10 +107,9 @@ void FSM_Update(FSM_Context_t *ctx,
                 float Wz,
                 float *Vx1, float *Vx2)
 {
-    float pitch_tmp, roll_tmp, yaw_tmp; /* 临时姿态角，供各状态内部使用 */
-
     switch (ctx->current)
     {
+        
     /* ==============================================================
      * STATE_IDLE: 空闲，等待 KEY 触发（由 main.c 负责检测 KEY 并调用）
      * 此状态下 FSM_Update 不会被 main.c 调用（main.c 判断 KEY==1 后才调用）
@@ -128,8 +127,6 @@ void FSM_Update(FSM_Context_t *ctx,
         {
             *Vx1 = (myabs(Encoders.cntC) / 5 + 300);
             *Vx2 = (myabs(Encoders.cntC) / 5 + 300);
-            mpu_dmp_get_data(&pitch_tmp, &roll_tmp, &yaw_tmp);
-            Wz = ControlPID1(yaw_tmp);
             Motor_Analysis(*Vx1, *Vx2, 0, 0, Wz);
             if (myabs(Encoders.cntC) > 3000)
             {
@@ -144,8 +141,6 @@ void FSM_Update(FSM_Context_t *ctx,
     case STATE_LONG_FORWARD:
         if (myabs(Encoders.cntC) < 26000)
         {
-            mpu_dmp_get_data(&pitch_tmp, &roll_tmp, &yaw_tmp);
-            Wz = ControlPID1(yaw_tmp);
             if (UL_Dis.Left < 72)
             {
                 *Vx1 = *Base_Speed - (5 * (74 - UL_Dis.Left));
@@ -174,7 +169,6 @@ void FSM_Update(FSM_Context_t *ctx,
      * ============================================================== */
     case STATE_BRAKE_FORWARD:
         *Base_Speed = 900;
-        mpu_dmp_get_data(&pitch_tmp, &roll_tmp, &yaw_tmp);
         *Forward_Coeff = 1.2f;
         *Forward_Offset = 50;
         if (UL_Dis.Forward > 10)
@@ -260,8 +254,6 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if (myabs(Encoders.cntC) < (Reverse_Distance + 150))
         {
-            mpu_dmp_get_data(&pitch_tmp, &roll_tmp, &yaw_tmp);
-            Wz = ControlPID1(yaw_tmp);
             Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
         }
         else
@@ -332,8 +324,6 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if (myabs(Encoders.cntC) < (Reverse_Distance - 450))
         {
-            mpu_dmp_get_data(&pitch_tmp, &roll_tmp, &yaw_tmp);
-            Wz = ControlPID1(yaw_tmp);
             Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
         }
         else
@@ -404,8 +394,6 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if (myabs(Encoders.cntC) < (Reverse_Distance + 210))
         {
-            mpu_dmp_get_data(&pitch_tmp, &roll_tmp, &yaw_tmp);
-            Wz = ControlPID1(yaw_tmp);
             Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
         }
         else
@@ -476,8 +464,6 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if (myabs(Encoders.cntC) < (Reverse_Distance - 200))
         {
-            mpu_dmp_get_data(&pitch_tmp, &roll_tmp, &yaw_tmp);
-            Wz = ControlPID1(yaw_tmp);
             Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
         }
         else
@@ -548,8 +534,6 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if (myabs(Encoders.cntC) < (Reverse_Distance - 100))
         {
-            mpu_dmp_get_data(&pitch_tmp, &roll_tmp, &yaw_tmp);
-            Wz = ControlPID1(yaw_tmp);
             Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
         }
         else
@@ -634,8 +618,6 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if (myabs(Encoders.cntC) < 3400)
         {
-            mpu_dmp_get_data(&pitch_tmp, &roll_tmp, &yaw_tmp);
-            Wz = ControlPID1(yaw_tmp);
             Motor_Analysis(-850, -700, 0, 0, Wz);
         }
         else
