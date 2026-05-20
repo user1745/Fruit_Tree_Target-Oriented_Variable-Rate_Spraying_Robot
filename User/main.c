@@ -16,7 +16,6 @@ int main(void)
     float Wz = 0.0f; // 航向角 PID 输出
 
     FSM_Context_t g_fsm; // 有限状态机上下文
-    FSM_Init(&g_fsm); // 初始化有限状态机
 
     Delay_init(168);
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
@@ -29,6 +28,7 @@ int main(void)
     Motor_Init();
     Encoder_Init();
     Ultrasonic_Init();
+    FSM_Init(&g_fsm); // 硬件就绪后再初始化有限状态机
 
     while (1)
     {
