@@ -37,29 +37,27 @@ static void Motor_Analysis_Safe(float Vy1, float Vy2, float Vx1, float Vx2, floa
 /**
  * @brief 右横移（X 方向）+ 前方超声波 PID 对齐
  *
- * @param base    基础速度
- * @param kp      纠偏比例系数
- * @param target  前方目标距离（mm）
- * @param Wz      航向角 PID 输出
- * @param Vx1     输出：左侧横移速度
- * @param Vx2     输出：右侧横移速度
+ * @param Base_Speed  基础速度
+ * @param Kp          纠偏比例系数
+ * @param Target      前方目标距离（mm）
+ * @param Wz          航向角 PID 输出
  */
-static void drive_lateral_right_fwd_pid(int base, float kp, int target, float Wz)
+static void drive_lateral_right_fwd_pid(int Base_Speed, float Kp, int Target, float Wz)
 {
-    if (UL_Dis.Forward <= (u16)(target - 2))
+    if (UL_Dis.Forward <= (u16)(Target - 2))
     {
-        Vx1 = base;
-        Vx2 = base - (kp * (target - UL_Dis.Forward));
+        Vx1 = Base_Speed;
+        Vx2 = Base_Speed - (Kp * (Target - UL_Dis.Forward));
     }
-    else if (UL_Dis.Forward >= (u16)(target + 2))
+    else if (UL_Dis.Forward >= (u16)(Target + 2))
     {
-        Vx1 = base + (kp * (target - UL_Dis.Forward));
-        Vx2 = base;
+        Vx1 = Base_Speed + (Kp * (Target - UL_Dis.Forward));
+        Vx2 = Base_Speed;
     }
     else
     {
-        Vx1 = base;
-        Vx2 = base;
+        Vx1 = Base_Speed;
+        Vx2 = Base_Speed;
     }
     Motor_Analysis(0, 0, Vx1, Vx2, Wz);
 }
@@ -67,29 +65,27 @@ static void drive_lateral_right_fwd_pid(int base, float kp, int target, float Wz
 /**
  * @brief 左横移（X 方向）+ 前方超声波 PID 对齐
  *
- * @param base    基础速度
- * @param kp      纠偏比例系数
- * @param target  前方目标距离（mm）
- * @param Wz      航向角 PID 输出
- * @param Vx1     输出：左侧横移速度
- * @param Vx2     输出：右侧横移速度
+ * @param Base_Speed  基础速度
+ * @param Kp          纠偏比例系数
+ * @param Target      前方目标距离（mm）
+ * @param Wz          航向角 PID 输出
  */
-static void drive_lateral_left_fwd_pid(int base, float kp, int target, float Wz)
+static void drive_lateral_left_fwd_pid(int Base_Speed, float Kp, int Target, float Wz)
 {
-    if (UL_Dis.Forward <= (u16)(target - 2))
+    if (UL_Dis.Forward <= (u16)(Target - 2))
     {
-        Vx1 = -base + (kp * (target - UL_Dis.Forward));
-        Vx2 = -base;
+        Vx1 = -Base_Speed + (Kp * (Target - UL_Dis.Forward));
+        Vx2 = -Base_Speed;
     }
-    else if (UL_Dis.Forward >= (u16)(target + 2))
+    else if (UL_Dis.Forward >= (u16)(Target + 2))
     {
-        Vx1 = -base;
-        Vx2 = -base - (kp * (target - UL_Dis.Forward));
+        Vx1 = -Base_Speed;
+        Vx2 = -Base_Speed - (Kp * (Target - UL_Dis.Forward));
     }
     else
     {
-        Vx1 = -base;
-        Vx2 = -base;
+        Vx1 = -Base_Speed;
+        Vx2 = -Base_Speed;
     }
     Motor_Analysis(0, 0, Vx1, Vx2, Wz);
 }
@@ -118,8 +114,6 @@ void FSM_Init(FSM_Context_t *ctx)
  * @param  Reverse_Distance    后退距离
  * @param  Brake_Distance      左右超声波刹车距离
  * @param  Wz                  航向角 PID 输出
- * @param  Vx1                 左侧速度分量输出指针
- * @param  Vx2                 右侧速度分量输出指针
  */
 void FSM_Update(FSM_Context_t *ctx,
                 int *Base_Speed,
@@ -128,10 +122,6 @@ void FSM_Update(FSM_Context_t *ctx,
                 int Reverse_Speed, int Reverse_Distance, int Brake_Distance,
                 float Wz)
 {
-    static float Vx1_val = 0.0f;
-    static float Vx2_val = 0.0f;
-    float *Vx1 = &Vx1_val;
-    float *Vx2 = &Vx2_val;
     static int CNT;
     CNT = myabs(Encoders.cntC);
     switch (ctx->current)
