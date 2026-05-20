@@ -1,0 +1,42 @@
+# Auto normalize line endings to LF in repo, keep native on checkout
+* text=auto
+
+# C/C++ source
+*.c text diff=cpp
+*.h text diff=cpp
+*.s text
+*.S text
+*.inc text
+
+# Keil MDK project files
+*.uvprojx text
+*.uvoptx text
+*.uvguix.* text
+
+# Scripts
+*.bat text eol=crlf
+*.ps1 text
+
+# Markdown / docs
+*.md text
+*.txt text
+
+# Build outputs – never diff or normalize
+*.o binary
+*.axf binary
+*.crf binary
+*.d binary
+*.lst binary
+*.dep binary
+*.htm binary
+*.map binary
+*.lnp binary
+*.sct binary
+*.build_log.htm binary
+Objects/** binary
+
+# Git hooks – must keep LF for shebang
+.githooks/** text eol=lf
+
+# Debugger / IDE config
+Debugconfig/** binary

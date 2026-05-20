@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+# post-checkout hook
+# Ensures Git respects filename casing on case-insensitive filesystems.
+#
+git config core.ignorecase false
