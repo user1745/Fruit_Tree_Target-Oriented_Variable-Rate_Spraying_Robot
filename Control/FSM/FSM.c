@@ -27,11 +27,12 @@
 /**
  * @brief 状态转移：更新 ctx->previous / ctx->current，重置编码器
  */
-#define FSM_TRANSITION(ctx, next_state)  \
-    do {                                 \
-        (ctx)->previous = (ctx)->current;\
-        (ctx)->current  = (next_state);  \
-        TIM4->CNT = 0;                   \
+#define FSM_TRANSITION(ctx, next_state)   \
+    do                                    \
+    {                                     \
+        (ctx)->previous = (ctx)->current; \
+        (ctx)->current = (next_state);    \
+        TIM4->CNT = 0;                    \
     } while (0)
 
 /* ============================================================
@@ -49,8 +50,7 @@
  * @param Vx1     输出：左侧速度
  * @param Vx2     输出：右侧速度
  */
-static void drive_forward_left_pid(int base, float kp, int target,
-                                   float Wz, float *Vx1, float *Vx2)
+static void drive_forward_left_pid(int base, float kp, int target, float Wz, float *Vx1, float *Vx2)
 {
     if (UL_Dis.Left < (u16)(target - 2))
     {
@@ -81,8 +81,7 @@ static void drive_forward_left_pid(int base, float kp, int target,
  * @param Vx1     输出：左侧横移速度
  * @param Vx2     输出：右侧横移速度
  */
-static void drive_lateral_right_fwd_pid(int base, float kp, int target,
-                                        float Wz, float *Vx1, float *Vx2)
+static void drive_lateral_right_fwd_pid(int base, float kp, int target, float Wz, float *Vx1, float *Vx2)
 {
     if (UL_Dis.Forward <= (u16)(target - 2))
     {
@@ -113,8 +112,7 @@ static void drive_lateral_right_fwd_pid(int base, float kp, int target,
  * @param Vx1     输出：左侧横移速度
  * @param Vx2     输出：右侧横移速度
  */
-static void drive_lateral_left_fwd_pid(int base, float kp, int target,
-                                       float Wz, float *Vx1, float *Vx2)
+static void drive_lateral_left_fwd_pid(int base, float kp, int target, float Wz, float *Vx1, float *Vx2)
 {
     if (UL_Dis.Forward <= (u16)(target - 2))
     {
@@ -140,7 +138,7 @@ static void drive_lateral_left_fwd_pid(int base, float kp, int target,
 
 void FSM_Init(FSM_Context_t *ctx)
 {
-    ctx->current  = STATE_IDLE;
+    ctx->current = STATE_IDLE;
     ctx->previous = STATE_IDLE;
 }
 
@@ -150,11 +148,11 @@ void FSM_Init(FSM_Context_t *ctx)
  * 函数为非阻塞式：每次调用仅执行一个状态的单步动作，立即返回。
  * ------------------------------------------------------------------ */
 void FSM_Update(FSM_Context_t *ctx,
-                int   *C1,
-                float *A,  float *a,
-                float *B,  float *b,
-                int    back, int BACK, int stop,
-                float  Wz,
+                int *Base_Speed,
+                float *A, float *a,
+                float *B, float *b,
+                int Reverse_Speed, int Reverse_Distance, int Brake_Distance,
+                float Wz,
                 float *Vx1, float *Vx2)
 {
     float pitch_tmp, roll_tmp, yaw_tmp; /* 临时姿态角，供各状态内部使用 */
@@ -167,7 +165,8 @@ void FSM_Update(FSM_Context_t *ctx,
      * 保留此 case 作为防御性处理。
      * ============================================================== */
     case STATE_IDLE:
-        Motor_Set(0, 0, 0, 0);
+        /* KEY 已按下 → 直接进入短进直垄道 */
+        FSM_TRANSITION(ctx, STATE_SHORT_FORWARD);
         break;
 
     /* ==============================================================
@@ -202,18 +201,18 @@ void FSM_Update(FSM_Context_t *ctx,
             /* 左侧超声波 PID 循迹，目标距离 74 mm，系数 5 */
             if (UL_Dis.Left < 72)
             {
-                *Vx1 = *C1 - (5 * (74 - UL_Dis.Left));
-                *Vx2 = *C1;
+                *Vx1 = *Base_Speed - (5 * (74 - UL_Dis.Left));
+                *Vx2 = *Base_Speed;
             }
             else if (UL_Dis.Left > 76)
             {
-                *Vx1 = *C1;
-                *Vx2 = *C1 + (5 * (74 - UL_Dis.Left));
+                *Vx1 = *Base_Speed;
+                *Vx2 = *Base_Speed + (5 * (74 - UL_Dis.Left));
             }
             else
             {
-                *Vx1 = *C1;
-                *Vx2 = *C1;
+                *Vx1 = *Base_Speed;
+                *Vx2 = *Base_Speed;
             }
             Motor_Analysis(*Vx1, *Vx2, 0, 0, Wz);
             if (myabs(Encoders.cntC) > 22000)
@@ -229,22 +228,22 @@ void FSM_Update(FSM_Context_t *ctx,
      * 原逻辑: if ((flag2==0) && (flag3==1))
      * ============================================================== */
     case STATE_BRAKE_FORWARD:
-        *C1  = 900;
+        *Base_Speed = 900;
         mpu_dmp_get_data(&pitch_tmp, &roll_tmp, &yaw_tmp);
-        *B   = 1.2f;
-        *b   = 50;
+        *B = 1.2f;
+        *b = 50;
         if (UL_Dis.Forward > 10)
         {
-            *C1 = (UL_Dis.Forward * (*B) - (*b));
+            *Base_Speed = (UL_Dis.Forward * (*B) - (*b));
             if (UL_Dis.Left < 72)
             {
-                *Vx1 = *C1 - (3 * (74 - UL_Dis.Left));
-                *Vx2 = *C1;
+                *Vx1 = *Base_Speed - (3 * (74 - UL_Dis.Left));
+                *Vx2 = *Base_Speed;
             }
             else if (UL_Dis.Left > 76)
             {
-                *Vx1 = *C1;
-                *Vx2 = *C1 + (3 * (74 - UL_Dis.Left));
+                *Vx1 = *Base_Speed;
+                *Vx2 = *Base_Speed + (3 * (74 - UL_Dis.Left));
             }
             Motor_Analysis(*Vx1, *Vx2, 0, 0, Wz);
         }
@@ -266,11 +265,11 @@ void FSM_Update(FSM_Context_t *ctx,
         if (myabs(Encoders.cntC) < 16000)
         {
             if (myabs(Encoders.cntC) < 1500)
-                *C1 = myabs(Encoders.cntC) / 1.2f + 200;
+                *Base_Speed = myabs(Encoders.cntC) / 1.2f + 200;
             else
-                *C1 = 950;
+                *Base_Speed = 950;
 
-            drive_lateral_right_fwd_pid(*C1, 5.0f, 95, Wz, Vx1, Vx2);
+            drive_lateral_right_fwd_pid(*Base_Speed, 5.0f, 95, Wz, Vx1, Vx2);
 
             if (myabs(Encoders.cntC) > 15000)
             {
@@ -305,7 +304,7 @@ void FSM_Update(FSM_Context_t *ctx,
                 *Vx2 = (UL_Dis.Right * (*A) - (*a));
             }
             Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
-            if (UL_Dis.Right <= (stop + 10))
+            if (UL_Dis.Right <= (Brake_Distance + 10))
             {
                 /* flag5 = 0 → 进入后退1 */
                 FSM_TRANSITION(ctx, STATE_BACKWARD_1);
@@ -321,11 +320,11 @@ void FSM_Update(FSM_Context_t *ctx,
     case STATE_BACKWARD_1:
         Usart3_Send(5, 1);
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < (BACK + 150))
+        if (myabs(Encoders.cntC) < (Reverse_Distance + 150))
         {
             mpu_dmp_get_data(&pitch_tmp, &roll_tmp, &yaw_tmp);
             Wz = ControlPID1(yaw_tmp);
-            Motor_Analysis(back, back, 0, 0, Wz);
+            Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
         }
         else
         {
@@ -344,9 +343,9 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if ((UL_Dis.Right <= 600) && (UL_Dis.Right >= 20))
         {
-            *C1  = UL_Dis.Right * 3 + 150;
-            *Vx1 = -(*C1);
-            *Vx2 = -(*C1);
+            *Base_Speed = UL_Dis.Right * 3 + 150;
+            *Vx1 = -(*Base_Speed);
+            *Vx2 = -(*Base_Speed);
             Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
             if (UL_Dis.Right >= 300)
             {
@@ -364,8 +363,8 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if (myabs(Encoders.cntC) < 16000)
         {
-            *C1 = 950;
-            drive_lateral_left_fwd_pid(*C1, 6.5f, 95, Wz, Vx1, Vx2);
+            *Base_Speed = 950;
+            drive_lateral_left_fwd_pid(*Base_Speed, 6.5f, 95, Wz, Vx1, Vx2);
             if (myabs(Encoders.cntC) > 11500)
             {
                 /* flag8 = 0 → 进入左进垄道2刹车 */
@@ -386,7 +385,7 @@ void FSM_Update(FSM_Context_t *ctx,
             *Vx1 = -(UL_Dis.Left * (*A) - (*a));
             *Vx2 = -(UL_Dis.Left * (*A) - (*a));
             Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
-            if (UL_Dis.Left <= stop + 30)
+            if (UL_Dis.Left <= Brake_Distance + 30)
             {
                 /* flag9 = 0 → 进入后退2 */
                 FSM_TRANSITION(ctx, STATE_BACKWARD_2);
@@ -401,11 +400,11 @@ void FSM_Update(FSM_Context_t *ctx,
     case STATE_BACKWARD_2:
         Usart3_Send(5, 0);
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < (BACK - 450))
+        if (myabs(Encoders.cntC) < (Reverse_Distance - 450))
         {
             mpu_dmp_get_data(&pitch_tmp, &roll_tmp, &yaw_tmp);
             Wz = ControlPID1(yaw_tmp);
-            Motor_Analysis(back, back, 0, 0, Wz);
+            Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
         }
         else
         {
@@ -424,9 +423,9 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if ((UL_Dis.Left <= 600) && (UL_Dis.Left >= 20))
         {
-            *C1  = UL_Dis.Left * 4 + 200;
-            *Vx1 = *C1;
-            *Vx2 = *C1;
+            *Base_Speed = UL_Dis.Left * 4 + 200;
+            *Vx1 = *Base_Speed;
+            *Vx2 = *Base_Speed;
             Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
             if (UL_Dis.Left >= 300)
             {
@@ -444,8 +443,8 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if (myabs(Encoders.cntC) < 16000)
         {
-            *C1 = 950;
-            drive_lateral_right_fwd_pid(*C1, 6.5f, 95, Wz, Vx1, Vx2);
+            *Base_Speed = 950;
+            drive_lateral_right_fwd_pid(*Base_Speed, 6.5f, 95, Wz, Vx1, Vx2);
             if (myabs(Encoders.cntC) > 11500)
             {
                 /* flag12 = 0 → 进入右进垄道3刹车 */
@@ -466,7 +465,7 @@ void FSM_Update(FSM_Context_t *ctx,
             *Vx1 = (UL_Dis.Right * (*A) - (*a));
             *Vx2 = (UL_Dis.Right * (*A) - (*a));
             Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
-            if (UL_Dis.Right <= stop)
+            if (UL_Dis.Right <= Brake_Distance)
             {
                 /* flag13 = 0 → 进入后退3 */
                 FSM_TRANSITION(ctx, STATE_BACKWARD_3);
@@ -481,11 +480,11 @@ void FSM_Update(FSM_Context_t *ctx,
     case STATE_BACKWARD_3:
         Usart3_Send(5, 1);
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < (BACK + 210))
+        if (myabs(Encoders.cntC) < (Reverse_Distance + 210))
         {
             mpu_dmp_get_data(&pitch_tmp, &roll_tmp, &yaw_tmp);
             Wz = ControlPID1(yaw_tmp);
-            Motor_Analysis(back, back, 0, 0, Wz);
+            Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
         }
         else
         {
@@ -504,9 +503,9 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if ((UL_Dis.Right <= 450) && (UL_Dis.Right >= 20))
         {
-            *C1  = UL_Dis.Right * 4 + 150;
-            *Vx1 = -(*C1);
-            *Vx2 = -(*C1);
+            *Base_Speed = UL_Dis.Right * 4 + 150;
+            *Vx1 = -(*Base_Speed);
+            *Vx2 = -(*Base_Speed);
             Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
             if (UL_Dis.Right >= 300)
             {
@@ -524,8 +523,8 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if (myabs(Encoders.cntC) < 16000)
         {
-            *C1 = 950;
-            drive_lateral_left_fwd_pid(*C1, 6.5f, 95, Wz, Vx1, Vx2);
+            *Base_Speed = 950;
+            drive_lateral_left_fwd_pid(*Base_Speed, 6.5f, 95, Wz, Vx1, Vx2);
             if (myabs(Encoders.cntC) > 11500)
             {
                 /* flag16 = 0 → 进入左进垄道4刹车 */
@@ -546,7 +545,7 @@ void FSM_Update(FSM_Context_t *ctx,
             *Vx1 = -(UL_Dis.Left * (*A) - (*a));
             *Vx2 = -(UL_Dis.Left * (*A) - (*a));
             Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
-            if (UL_Dis.Left <= stop)
+            if (UL_Dis.Left <= Brake_Distance)
             {
                 /* flag17 = 0 → 进入后退4 */
                 FSM_TRANSITION(ctx, STATE_BACKWARD_4);
@@ -561,11 +560,11 @@ void FSM_Update(FSM_Context_t *ctx,
     case STATE_BACKWARD_4:
         Usart3_Send(5, 0);
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < (BACK - 200))
+        if (myabs(Encoders.cntC) < (Reverse_Distance - 200))
         {
             mpu_dmp_get_data(&pitch_tmp, &roll_tmp, &yaw_tmp);
             Wz = ControlPID1(yaw_tmp);
-            Motor_Analysis(back, back, 0, 0, Wz);
+            Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
         }
         else
         {
@@ -584,9 +583,9 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if ((UL_Dis.Left <= 600) && (UL_Dis.Left >= 20))
         {
-            *C1  = UL_Dis.Left * 4 + 150;
-            *Vx1 = *C1;
-            *Vx2 = *C1;
+            *Base_Speed = UL_Dis.Left * 4 + 150;
+            *Vx1 = *Base_Speed;
+            *Vx2 = *Base_Speed;
             Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
             if (UL_Dis.Left >= 300)
             {
@@ -604,8 +603,8 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if (myabs(Encoders.cntC) < 16000)
         {
-            *C1 = 950;
-            drive_lateral_right_fwd_pid(*C1, 6.5f, 95, Wz, Vx1, Vx2);
+            *Base_Speed = 950;
+            drive_lateral_right_fwd_pid(*Base_Speed, 6.5f, 95, Wz, Vx1, Vx2);
             if (myabs(Encoders.cntC) > 11500)
             {
                 /* flag20 = 0 → 进入右进垄道5刹车 */
@@ -626,7 +625,7 @@ void FSM_Update(FSM_Context_t *ctx,
             *Vx1 = (UL_Dis.Right * (*A) - (*a));
             *Vx2 = (UL_Dis.Right * (*A) - (*a));
             Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
-            if (UL_Dis.Right <= stop)
+            if (UL_Dis.Right <= Brake_Distance)
             {
                 /* flag21 = 0 → 进入后退5 */
                 FSM_TRANSITION(ctx, STATE_BACKWARD_5);
@@ -641,11 +640,11 @@ void FSM_Update(FSM_Context_t *ctx,
     case STATE_BACKWARD_5:
         Usart3_Send(5, 1);
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < (BACK - 100))
+        if (myabs(Encoders.cntC) < (Reverse_Distance - 100))
         {
             mpu_dmp_get_data(&pitch_tmp, &roll_tmp, &yaw_tmp);
             Wz = ControlPID1(yaw_tmp);
-            Motor_Analysis(back, back, 0, 0, Wz);
+            Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
         }
         else
         {
@@ -664,9 +663,9 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if ((UL_Dis.Right <= 600) && (UL_Dis.Right >= 20))
         {
-            *C1  = UL_Dis.Right * 3 + 150;
-            *Vx1 = -(*C1);
-            *Vx2 = -(*C1);
+            *Base_Speed = UL_Dis.Right * 3 + 150;
+            *Vx1 = -(*Base_Speed);
+            *Vx2 = -(*Base_Speed);
             Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
             if (UL_Dis.Right >= 300)
             {
@@ -684,22 +683,22 @@ void FSM_Update(FSM_Context_t *ctx,
         Read_Encoder_cnt();
         if (myabs(Encoders.cntC) < 16000)
         {
-            *C1 = 950;
+            *Base_Speed = 950;
             /* 注意：原代码此段 Forward >= 96（非97），保持原逻辑 */
             if (UL_Dis.Forward <= 93)
             {
-                *Vx1 = -(*C1) + (6.5f * (95 - UL_Dis.Forward));
-                *Vx2 = -(*C1);
+                *Vx1 = -(*Base_Speed) + (6.5f * (95 - UL_Dis.Forward));
+                *Vx2 = -(*Base_Speed);
             }
             else if (UL_Dis.Forward >= 96)
             {
-                *Vx1 = -(*C1);
-                *Vx2 = -(*C1) - (6.5f * (95 - UL_Dis.Forward));
+                *Vx1 = -(*Base_Speed);
+                *Vx2 = -(*Base_Speed) - (6.5f * (95 - UL_Dis.Forward));
             }
             else
             {
-                *Vx1 = -(*C1);
-                *Vx2 = -(*C1);
+                *Vx1 = -(*Base_Speed);
+                *Vx2 = -(*Base_Speed);
             }
             Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
             if (myabs(Encoders.cntC) > 11500)
@@ -722,7 +721,7 @@ void FSM_Update(FSM_Context_t *ctx,
             *Vx1 = -(UL_Dis.Left * (*A) - (*a));
             *Vx2 = -(UL_Dis.Left * (*A) - (*a));
             Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
-            if (UL_Dis.Left <= (stop + 50))
+            if (UL_Dis.Left <= (Brake_Distance + 50))
             {
                 /* flag25 = 0 → 进入返航后退 */
                 FSM_TRANSITION(ctx, STATE_RETURN_HOME);
