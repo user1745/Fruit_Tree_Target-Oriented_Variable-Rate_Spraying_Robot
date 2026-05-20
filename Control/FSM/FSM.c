@@ -120,7 +120,6 @@ void FSM_Update(FSM_Context_t *ctx,
                 int Reverse_Speed, int Reverse_Distance, int Brake_Distance,
                 float Wz)
 {
-    int CNT = myabs(Encoders.cntC);
     switch (ctx->current)
     {
         
@@ -137,6 +136,8 @@ void FSM_Update(FSM_Context_t *ctx,
      * 短进直垄道
      * ============================================================== */
     case STATE_SHORT_FORWARD:
+    {
+        int CNT = myabs(Encoders.cntC);
         if (CNT < 4000)
         {
             Vx1 = (CNT / 5 + 300);
@@ -148,11 +149,14 @@ void FSM_Update(FSM_Context_t *ctx,
             }
         }
         break;
+    }
 
     /* ==============================================================
      * 长进直垄道
      * ============================================================== */
     case STATE_LONG_FORWARD:
+    {
+        int CNT = myabs(Encoders.cntC);
         if (CNT < 26000)
         {
             if (UL_Dis.Left < 72)
@@ -177,6 +181,7 @@ void FSM_Update(FSM_Context_t *ctx,
             }
         }
         break;
+    }
 
     /* ==============================================================
      * 直进垄道刹车
@@ -211,9 +216,9 @@ void FSM_Update(FSM_Context_t *ctx,
      * 右进垄道1：右横移
      * ============================================================== */
     case STATE_SHIFT_RIGHT_1:
+    {
         Motor_Set(0, 0, 0, 0);
-        
-        CNT = myabs(Encoders.cntC);
+        int CNT = myabs(Encoders.cntC);
         if (CNT < 16000)
         {
             if (CNT < 1500)
@@ -229,6 +234,7 @@ void FSM_Update(FSM_Context_t *ctx,
             }
         }
         break;
+    }
 
     /* ==============================================================
      * 右进垄道1刹车：右侧超声波减速
@@ -265,9 +271,9 @@ void FSM_Update(FSM_Context_t *ctx,
      * 后退1
      * ============================================================== */
     case STATE_BACKWARD_1:
+    {
         Usart3_Send(5, 1);
-        
-        CNT = myabs(Encoders.cntC);
+        int CNT = myabs(Encoders.cntC);
         if (CNT < (Reverse_Distance + 150))
         {
             Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
@@ -278,6 +284,7 @@ void FSM_Update(FSM_Context_t *ctx,
             Motor_Set(0, 0, 0, 0);
         }
         break;
+    }
 
     /* ==============================================================
      * 左进垄道2：左横移
@@ -302,8 +309,8 @@ void FSM_Update(FSM_Context_t *ctx,
      * 左进垄道2前进
      * ============================================================== */
     case STATE_FORWARD_LEFT_2:
-        
-        CNT = myabs(Encoders.cntC);
+    {
+        int CNT = myabs(Encoders.cntC);
         if (CNT < 16000)
         {
             Base_Speed = 950;
@@ -314,6 +321,7 @@ void FSM_Update(FSM_Context_t *ctx,
             }
         }
         break;
+    }
 
     /* ==============================================================
      * 左进垄道2刹车：左侧超声波减速
@@ -337,9 +345,9 @@ void FSM_Update(FSM_Context_t *ctx,
      * 后退2
      * ============================================================== */
     case STATE_BACKWARD_2:
+    {
         Usart3_Send(5, 0);
-        
-        CNT = myabs(Encoders.cntC);
+        int CNT = myabs(Encoders.cntC);
         if (CNT < (Reverse_Distance - 450))
         {
             Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
@@ -350,6 +358,7 @@ void FSM_Update(FSM_Context_t *ctx,
             TIM4->CNT = 0;
         }
         break;
+    }
 
     /* ==============================================================
      * 右进垄道3：右横移
@@ -374,8 +383,8 @@ void FSM_Update(FSM_Context_t *ctx,
      * 右进垄道3前进
      * ============================================================== */
     case STATE_FORWARD_RIGHT_3:
-        
-        CNT = myabs(Encoders.cntC);
+    {
+        int CNT = myabs(Encoders.cntC);
         if (CNT < 16000)
         {
             Base_Speed = 950;
@@ -386,6 +395,7 @@ void FSM_Update(FSM_Context_t *ctx,
             }
         }
         break;
+    }
 
     /* ==============================================================
      * 右进垄道3刹车：右侧超声波减速
@@ -409,9 +419,9 @@ void FSM_Update(FSM_Context_t *ctx,
      * 后退3
      * ============================================================== */
     case STATE_BACKWARD_3:
+    {
         Usart3_Send(5, 1);
-        
-        CNT = myabs(Encoders.cntC);
+        int CNT = myabs(Encoders.cntC);
         if (CNT < (Reverse_Distance + 210))
         {
             Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
@@ -422,6 +432,7 @@ void FSM_Update(FSM_Context_t *ctx,
             TIM4->CNT = 0;
         }
         break;
+    }
 
     /* ==============================================================
      * 左进垄道4：左横移
@@ -446,8 +457,8 @@ void FSM_Update(FSM_Context_t *ctx,
      * 左进垄道4前进
      * ============================================================== */
     case STATE_FORWARD_LEFT_4:
-        
-        CNT = myabs(Encoders.cntC);
+    {
+        int CNT = myabs(Encoders.cntC);
         if (CNT < 16000)
         {
             Base_Speed = 950;
@@ -458,6 +469,7 @@ void FSM_Update(FSM_Context_t *ctx,
             }
         }
         break;
+    }
 
     /* ==============================================================
      * 左进垄道4刹车：左侧超声波减速
@@ -481,9 +493,9 @@ void FSM_Update(FSM_Context_t *ctx,
      * 后退4
      * ============================================================== */
     case STATE_BACKWARD_4:
+    {
         Usart3_Send(5, 0);
-        
-        CNT = myabs(Encoders.cntC);
+        int CNT = myabs(Encoders.cntC);
         if (CNT < (Reverse_Distance - 200))
         {
             Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
@@ -494,6 +506,7 @@ void FSM_Update(FSM_Context_t *ctx,
             TIM4->CNT = 0;
         }
         break;
+    }
 
     /* ==============================================================
      * 右进垄道5：右横移
@@ -518,8 +531,8 @@ void FSM_Update(FSM_Context_t *ctx,
      * 右进垄道5前进
      * ============================================================== */
     case STATE_FORWARD_RIGHT_5:
-        
-        CNT = myabs(Encoders.cntC);
+    {
+        int CNT = myabs(Encoders.cntC);
         if (CNT < 16000)
         {
             Base_Speed = 950;
@@ -530,6 +543,7 @@ void FSM_Update(FSM_Context_t *ctx,
             }
         }
         break;
+    }
 
     /* ==============================================================
      * 右进垄道5刹车：右侧超声波减速
@@ -553,9 +567,9 @@ void FSM_Update(FSM_Context_t *ctx,
      * 后退5
      * ============================================================== */
     case STATE_BACKWARD_5:
+    {
         Usart3_Send(5, 1);
-        
-        CNT = myabs(Encoders.cntC);
+        int CNT = myabs(Encoders.cntC);
         if (CNT < (Reverse_Distance - 100))
         {
             Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
@@ -566,6 +580,7 @@ void FSM_Update(FSM_Context_t *ctx,
             Motor_Set(0, 0, 0, 0);
         }
         break;
+    }
 
     /* ==============================================================
      * 左进垄道6：左横移
@@ -590,8 +605,8 @@ void FSM_Update(FSM_Context_t *ctx,
      * 左进垄道6前进
      * ============================================================== */
     case STATE_FORWARD_LEFT_6:
-        
-        CNT = myabs(Encoders.cntC);
+    {
+        int CNT = myabs(Encoders.cntC);
         if (CNT < 16000)
         {
             Base_Speed = 950;
@@ -617,6 +632,7 @@ void FSM_Update(FSM_Context_t *ctx,
             }
         }
         break;
+    }
 
     /* ==============================================================
      * 左进垄道6刹车：左侧超声波减速
@@ -640,8 +656,8 @@ void FSM_Update(FSM_Context_t *ctx,
      * 返航后退
      * ============================================================== */
     case STATE_RETURN_HOME:
-        
-        CNT = myabs(Encoders.cntC);
+    {
+        int CNT = myabs(Encoders.cntC);
         if (CNT < 3400)
         {
             Motor_Analysis(-850, -700, 0, 0, Wz);
@@ -652,6 +668,7 @@ void FSM_Update(FSM_Context_t *ctx,
             Motor_Set(0, 0, 0, 0);
         }
         break;
+    }
 
     /* ==============================================================
      * STATE_DONE: 全部任务完成，停止
