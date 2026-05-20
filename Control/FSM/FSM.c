@@ -107,6 +107,8 @@ void FSM_Update(FSM_Context_t *ctx,
                 float Wz,
                 float *Vx1, float *Vx2)
 {
+    static int CNT;
+    CNT = myabs(Encoders.cntC);
     switch (ctx->current)
     {
         
@@ -123,12 +125,12 @@ void FSM_Update(FSM_Context_t *ctx,
      * 短进直垄道
      * ============================================================== */
     case STATE_SHORT_FORWARD:
-        if (myabs(Encoders.cntC) < 4000)
+        if (CNT < 4000)
         {
-            *Vx1 = (myabs(Encoders.cntC) / 5 + 300);
-            *Vx2 = (myabs(Encoders.cntC) / 5 + 300);
+            *Vx1 = (CNT / 5 + 300);
+            *Vx2 = (CNT / 5 + 300);
             Motor_Analysis(*Vx1, *Vx2, 0, 0, Wz);
-            if (myabs(Encoders.cntC) > 3000)
+            if (CNT > 3000)
             {
                 FSM_TRANSITION(ctx, STATE_LONG_FORWARD);
             }
@@ -139,7 +141,7 @@ void FSM_Update(FSM_Context_t *ctx,
      * 长进直垄道
      * ============================================================== */
     case STATE_LONG_FORWARD:
-        if (myabs(Encoders.cntC) < 26000)
+        if (CNT < 26000)
         {
             if (UL_Dis.Left < 72)
             {
@@ -157,7 +159,7 @@ void FSM_Update(FSM_Context_t *ctx,
                 *Vx2 = *Base_Speed;
             }
             Motor_Analysis(*Vx1, *Vx2, 0, 0, Wz);
-            if (myabs(Encoders.cntC) > 22000)
+            if (CNT > 22000)
             {
                 FSM_TRANSITION(ctx, STATE_BRAKE_FORWARD);
             }
@@ -199,16 +201,17 @@ void FSM_Update(FSM_Context_t *ctx,
     case STATE_SHIFT_RIGHT_1:
         Motor_Set(0, 0, 0, 0);
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < 16000)
+        CNT = myabs(Encoders.cntC);
+        if (CNT < 16000)
         {
-            if (myabs(Encoders.cntC) < 1500)
-                *Base_Speed = myabs(Encoders.cntC) / 1.2f + 200;
+            if (CNT < 1500)
+                *Base_Speed = CNT / 1.2f + 200;
             else
                 *Base_Speed = 950;
 
             drive_lateral_right_fwd_pid(*Base_Speed, 5.0f, 95, Wz, Vx1, Vx2);
 
-            if (myabs(Encoders.cntC) > 15000)
+            if (CNT > 15000)
             {
                 FSM_TRANSITION(ctx, STATE_BRAKE_RIGHT_1);
             }
@@ -252,7 +255,8 @@ void FSM_Update(FSM_Context_t *ctx,
     case STATE_BACKWARD_1:
         Usart3_Send(5, 1);
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < (Reverse_Distance + 150))
+        CNT = myabs(Encoders.cntC);
+        if (CNT < (Reverse_Distance + 150))
         {
             Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
         }
@@ -287,11 +291,12 @@ void FSM_Update(FSM_Context_t *ctx,
      * ============================================================== */
     case STATE_FORWARD_LEFT_2:
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < 16000)
+        CNT = myabs(Encoders.cntC);
+        if (CNT < 16000)
         {
             *Base_Speed = 950;
             drive_lateral_left_fwd_pid(*Base_Speed, 6.5f, 95, Wz, Vx1, Vx2);
-            if (myabs(Encoders.cntC) > 11500)
+            if (CNT > 11500)
             {
                 FSM_TRANSITION(ctx, STATE_BRAKE_LEFT_2);
             }
@@ -322,7 +327,8 @@ void FSM_Update(FSM_Context_t *ctx,
     case STATE_BACKWARD_2:
         Usart3_Send(5, 0);
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < (Reverse_Distance - 450))
+        CNT = myabs(Encoders.cntC);
+        if (CNT < (Reverse_Distance - 450))
         {
             Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
         }
@@ -357,11 +363,12 @@ void FSM_Update(FSM_Context_t *ctx,
      * ============================================================== */
     case STATE_FORWARD_RIGHT_3:
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < 16000)
+        CNT = myabs(Encoders.cntC);
+        if (CNT < 16000)
         {
             *Base_Speed = 950;
             drive_lateral_right_fwd_pid(*Base_Speed, 6.5f, 95, Wz, Vx1, Vx2);
-            if (myabs(Encoders.cntC) > 11500)
+            if (CNT > 11500)
             {
                 FSM_TRANSITION(ctx, STATE_BRAKE_RIGHT_3);
             }
@@ -392,7 +399,8 @@ void FSM_Update(FSM_Context_t *ctx,
     case STATE_BACKWARD_3:
         Usart3_Send(5, 1);
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < (Reverse_Distance + 210))
+        CNT = myabs(Encoders.cntC);
+        if (CNT < (Reverse_Distance + 210))
         {
             Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
         }
@@ -427,11 +435,12 @@ void FSM_Update(FSM_Context_t *ctx,
      * ============================================================== */
     case STATE_FORWARD_LEFT_4:
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < 16000)
+        CNT = myabs(Encoders.cntC);
+        if (CNT < 16000)
         {
             *Base_Speed = 950;
             drive_lateral_left_fwd_pid(*Base_Speed, 6.5f, 95, Wz, Vx1, Vx2);
-            if (myabs(Encoders.cntC) > 11500)
+            if (CNT > 11500)
             {  
                 FSM_TRANSITION(ctx, STATE_BRAKE_LEFT_4);
             }
@@ -462,7 +471,8 @@ void FSM_Update(FSM_Context_t *ctx,
     case STATE_BACKWARD_4:
         Usart3_Send(5, 0);
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < (Reverse_Distance - 200))
+        CNT = myabs(Encoders.cntC);
+        if (CNT < (Reverse_Distance - 200))
         {
             Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
         }
@@ -497,11 +507,12 @@ void FSM_Update(FSM_Context_t *ctx,
      * ============================================================== */
     case STATE_FORWARD_RIGHT_5:
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < 16000)
+        CNT = myabs(Encoders.cntC);
+        if (CNT < 16000)
         {
             *Base_Speed = 950;
             drive_lateral_right_fwd_pid(*Base_Speed, 6.5f, 95, Wz, Vx1, Vx2);
-            if (myabs(Encoders.cntC) > 11500)
+            if (CNT > 11500)
             {
                 FSM_TRANSITION(ctx, STATE_BRAKE_RIGHT_5);
             }
@@ -532,7 +543,8 @@ void FSM_Update(FSM_Context_t *ctx,
     case STATE_BACKWARD_5:
         Usart3_Send(5, 1);
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < (Reverse_Distance - 100))
+        CNT = myabs(Encoders.cntC);
+        if (CNT < (Reverse_Distance - 100))
         {
             Motor_Analysis(Reverse_Speed, Reverse_Speed, 0, 0, Wz);
         }
@@ -567,7 +579,8 @@ void FSM_Update(FSM_Context_t *ctx,
      * ============================================================== */
     case STATE_FORWARD_LEFT_6:
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < 16000)
+        CNT = myabs(Encoders.cntC);
+        if (CNT < 16000)
         {
             *Base_Speed = 950;
             if (UL_Dis.Forward <= 93)
@@ -586,7 +599,7 @@ void FSM_Update(FSM_Context_t *ctx,
                 *Vx2 = -(*Base_Speed);
             }
             Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
-            if (myabs(Encoders.cntC) > 11500)
+            if (CNT > 11500)
             {
                 FSM_TRANSITION(ctx, STATE_BRAKE_LEFT_6);
             }
@@ -616,7 +629,8 @@ void FSM_Update(FSM_Context_t *ctx,
      * ============================================================== */
     case STATE_RETURN_HOME:
         Read_Encoder_cnt();
-        if (myabs(Encoders.cntC) < 3400)
+        CNT = myabs(Encoders.cntC);
+        if (CNT < 3400)
         {
             Motor_Analysis(-850, -700, 0, 0, Wz);
         }
