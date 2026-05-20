@@ -67,15 +67,12 @@ void FSM_Init(FSM_Context_t *ctx);
  * @param  Reverse_Distance    后退距离
  * @param  Brake_Distance      左右超声波刹车距离
  * @param  Wz                  航向角 PID 输出
- * @param  Vx1                 左侧速度分量输出指针
- * @param  Vx2                 右侧速度分量输出指针
  */
 void FSM_Update(FSM_Context_t *ctx,
                 int *Base_Speed,
                 float *Lateral_Coeff, float *Lateral_Offset,
                 float *Forward_Coeff, float *Forward_Offset,
                 int Reverse_Speed, int Reverse_Distance, int Brake_Distance,
-                float Wz,
-                float *Vx1, float *Vx2);
+                float Wz);
 
 #endif

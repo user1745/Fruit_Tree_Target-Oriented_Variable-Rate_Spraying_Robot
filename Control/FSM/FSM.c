@@ -1,5 +1,10 @@
-#include "sys.h"
+﻿#include "sys.h"
 #include "FSM.h"
+
+// static float Vy1; // Vy为正，前进；Vy为负，后退
+// static float Vy2; // Vy为正，前进；Vy为负，后退
+static float Vx1 = 0.0f; // Vx设正，1、4轮子为负，2、3轮子为正，小车左移
+static float Vx2 = 0.0f; // Vx设正，1、4轮子为负，2、3轮子为正，小车左移
 
 /**
  * @brief 状态转移：更新 ctx->previous / ctx->current，重置编码器
@@ -22,24 +27,24 @@
  * @param Vx1     输出：左侧横移速度
  * @param Vx2     输出：右侧横移速度
  */
-static void drive_lateral_right_fwd_pid(int base, float kp, int target, float Wz, float *Vx1, float *Vx2)
+static void drive_lateral_right_fwd_pid(int base, float kp, int target, float Wz)
 {
     if (UL_Dis.Forward <= (u16)(target - 2))
     {
-        *Vx1 = base;
-        *Vx2 = base - (kp * (target - UL_Dis.Forward));
+        Vx1 = base;
+        Vx2 = base - (kp * (target - UL_Dis.Forward));
     }
     else if (UL_Dis.Forward >= (u16)(target + 2))
     {
-        *Vx1 = base + (kp * (target - UL_Dis.Forward));
-        *Vx2 = base;
+        Vx1 = base + (kp * (target - UL_Dis.Forward));
+        Vx2 = base;
     }
     else
     {
-        *Vx1 = base;
-        *Vx2 = base;
+        Vx1 = base;
+        Vx2 = base;
     }
-    Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
+    Motor_Analysis(0, 0, Vx1, Vx2, Wz);
 }
 
 /**
@@ -52,24 +57,24 @@ static void drive_lateral_right_fwd_pid(int base, float kp, int target, float Wz
  * @param Vx1     输出：左侧横移速度
  * @param Vx2     输出：右侧横移速度
  */
-static void drive_lateral_left_fwd_pid(int base, float kp, int target, float Wz, float *Vx1, float *Vx2)
+static void drive_lateral_left_fwd_pid(int base, float kp, int target, float Wz)
 {
     if (UL_Dis.Forward <= (u16)(target - 2))
     {
-        *Vx1 = -base + (kp * (target - UL_Dis.Forward));
-        *Vx2 = -base;
+        Vx1 = -base + (kp * (target - UL_Dis.Forward));
+        Vx2 = -base;
     }
     else if (UL_Dis.Forward >= (u16)(target + 2))
     {
-        *Vx1 = -base;
-        *Vx2 = -base - (kp * (target - UL_Dis.Forward));
+        Vx1 = -base;
+        Vx2 = -base - (kp * (target - UL_Dis.Forward));
     }
     else
     {
-        *Vx1 = -base;
-        *Vx2 = -base;
+        Vx1 = -base;
+        Vx2 = -base;
     }
-    Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
+    Motor_Analysis(0, 0, Vx1, Vx2, Wz);
 }
 
 /**
@@ -104,8 +109,7 @@ void FSM_Update(FSM_Context_t *ctx,
                 float *Lateral_Coeff, float *Lateral_Offset,
                 float *Forward_Coeff, float *Forward_Offset,
                 int Reverse_Speed, int Reverse_Distance, int Brake_Distance,
-                float Wz,
-                float *Vx1, float *Vx2)
+                float Wz)
 {
     static int CNT;
     CNT = myabs(Encoders.cntC);
@@ -127,9 +131,9 @@ void FSM_Update(FSM_Context_t *ctx,
     case STATE_SHORT_FORWARD:
         if (CNT < 4000)
         {
-            *Vx1 = (CNT / 5 + 300);
-            *Vx2 = (CNT / 5 + 300);
-            Motor_Analysis(*Vx1, *Vx2, 0, 0, Wz);
+            Vx1 = (CNT / 5 + 300);
+            Vx2 = (CNT / 5 + 300);
+            Motor_Analysis(Vx1, Vx2, 0, 0, Wz);
             if (CNT > 3000)
             {
                 FSM_TRANSITION(ctx, STATE_LONG_FORWARD);
@@ -145,20 +149,20 @@ void FSM_Update(FSM_Context_t *ctx,
         {
             if (UL_Dis.Left < 72)
             {
-                *Vx1 = *Base_Speed - (5 * (74 - UL_Dis.Left));
-                *Vx2 = *Base_Speed;
+                Vx1 = *Base_Speed - (5 * (74 - UL_Dis.Left));
+                Vx2 = *Base_Speed;
             }
             else if (UL_Dis.Left > 76)
             {
-                *Vx1 = *Base_Speed;
-                *Vx2 = *Base_Speed + (5 * (74 - UL_Dis.Left));
+                Vx1 = *Base_Speed;
+                Vx2 = *Base_Speed + (5 * (74 - UL_Dis.Left));
             }
             else
             {
-                *Vx1 = *Base_Speed;
-                *Vx2 = *Base_Speed;
+                Vx1 = *Base_Speed;
+                Vx2 = *Base_Speed;
             }
-            Motor_Analysis(*Vx1, *Vx2, 0, 0, Wz);
+            Motor_Analysis(Vx1, Vx2, 0, 0, Wz);
             if (CNT > 22000)
             {
                 FSM_TRANSITION(ctx, STATE_BRAKE_FORWARD);
@@ -178,15 +182,15 @@ void FSM_Update(FSM_Context_t *ctx,
             *Base_Speed = (UL_Dis.Forward * (*Forward_Coeff) - (*Forward_Offset));
             if (UL_Dis.Left < 72)
             {
-                *Vx1 = *Base_Speed - (3 * (74 - UL_Dis.Left));
-                *Vx2 = *Base_Speed;
+                Vx1 = *Base_Speed - (3 * (74 - UL_Dis.Left));
+                Vx2 = *Base_Speed;
             }
             else if (UL_Dis.Left > 76)
             {
-                *Vx1 = *Base_Speed;
-                *Vx2 = *Base_Speed + (3 * (74 - UL_Dis.Left));
+                Vx1 = *Base_Speed;
+                Vx2 = *Base_Speed + (3 * (74 - UL_Dis.Left));
             }
-            Motor_Analysis(*Vx1, *Vx2, 0, 0, Wz);
+            Motor_Analysis(Vx1, Vx2, 0, 0, Wz);
         }
         if (UL_Dis.Forward < 260)
         {
@@ -209,7 +213,7 @@ void FSM_Update(FSM_Context_t *ctx,
             else
                 *Base_Speed = 950;
 
-            drive_lateral_right_fwd_pid(*Base_Speed, 5.0f, 95, Wz, Vx1, Vx2);
+            drive_lateral_right_fwd_pid(*Base_Speed, 5.0f, 95, Wz);
 
             if (CNT > 15000)
             {
@@ -228,20 +232,20 @@ void FSM_Update(FSM_Context_t *ctx,
         {
             if (UL_Dis.Forward <= 93)
             {
-                *Vx1 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
-                *Vx2 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset)) - (4 * (95 - UL_Dis.Forward));
+                Vx1 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
+                Vx2 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset)) - (4 * (95 - UL_Dis.Forward));
             }
             else if (UL_Dis.Forward >= 97)
             {
-                *Vx1 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset)) + (4 * (95 - UL_Dis.Forward));
-                *Vx2 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
+                Vx1 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset)) + (4 * (95 - UL_Dis.Forward));
+                Vx2 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
             }
             else
             {
-                *Vx1 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
-                *Vx2 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
+                Vx1 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
+                Vx2 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
             }
-            Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
+            Motor_Analysis(0, 0, Vx1, Vx2, Wz);
             if (UL_Dis.Right <= (Brake_Distance + 10))
             {
                 FSM_TRANSITION(ctx, STATE_BACKWARD_1);
@@ -276,9 +280,9 @@ void FSM_Update(FSM_Context_t *ctx,
         if ((UL_Dis.Right <= 600) && (UL_Dis.Right >= 20))
         {
             *Base_Speed = UL_Dis.Right * 3 + 150;
-            *Vx1 = -(*Base_Speed);
-            *Vx2 = -(*Base_Speed);
-            Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
+            Vx1 = -(*Base_Speed);
+            Vx2 = -(*Base_Speed);
+            Motor_Analysis(0, 0, Vx1, Vx2, Wz);
             if (UL_Dis.Right >= 300)
             {
                 FSM_TRANSITION(ctx, STATE_FORWARD_LEFT_2);
@@ -295,7 +299,7 @@ void FSM_Update(FSM_Context_t *ctx,
         if (CNT < 16000)
         {
             *Base_Speed = 950;
-            drive_lateral_left_fwd_pid(*Base_Speed, 6.5f, 95, Wz, Vx1, Vx2);
+            drive_lateral_left_fwd_pid(*Base_Speed, 6.5f, 95, Wz);
             if (CNT > 11500)
             {
                 FSM_TRANSITION(ctx, STATE_BRAKE_LEFT_2);
@@ -311,9 +315,9 @@ void FSM_Update(FSM_Context_t *ctx,
         *Lateral_Offset = 50;
         if (UL_Dis.Left > 10)
         {
-            *Vx1 = -(UL_Dis.Left * (*Lateral_Coeff) - (*Lateral_Offset));
-            *Vx2 = -(UL_Dis.Left * (*Lateral_Coeff) - (*Lateral_Offset));
-            Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
+            Vx1 = -(UL_Dis.Left * (*Lateral_Coeff) - (*Lateral_Offset));
+            Vx2 = -(UL_Dis.Left * (*Lateral_Coeff) - (*Lateral_Offset));
+            Motor_Analysis(0, 0, Vx1, Vx2, Wz);
             if (UL_Dis.Left <= Brake_Distance + 30)
             {
                 FSM_TRANSITION(ctx, STATE_BACKWARD_2);
@@ -348,9 +352,9 @@ void FSM_Update(FSM_Context_t *ctx,
         if ((UL_Dis.Left <= 600) && (UL_Dis.Left >= 20))
         {
             *Base_Speed = UL_Dis.Left * 4 + 200;
-            *Vx1 = *Base_Speed;
-            *Vx2 = *Base_Speed;
-            Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
+            Vx1 = *Base_Speed;
+            Vx2 = *Base_Speed;
+            Motor_Analysis(0, 0, Vx1, Vx2, Wz);
             if (UL_Dis.Left >= 300)
             {
                 FSM_TRANSITION(ctx, STATE_FORWARD_RIGHT_3);
@@ -367,7 +371,7 @@ void FSM_Update(FSM_Context_t *ctx,
         if (CNT < 16000)
         {
             *Base_Speed = 950;
-            drive_lateral_right_fwd_pid(*Base_Speed, 6.5f, 95, Wz, Vx1, Vx2);
+            drive_lateral_right_fwd_pid(*Base_Speed, 6.5f, 95, Wz);
             if (CNT > 11500)
             {
                 FSM_TRANSITION(ctx, STATE_BRAKE_RIGHT_3);
@@ -383,9 +387,9 @@ void FSM_Update(FSM_Context_t *ctx,
         *Lateral_Offset = 50;
         if (UL_Dis.Right > 10)
         {
-            *Vx1 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
-            *Vx2 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
-            Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
+            Vx1 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
+            Vx2 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
+            Motor_Analysis(0, 0, Vx1, Vx2, Wz);
             if (UL_Dis.Right <= Brake_Distance)
             {
                 FSM_TRANSITION(ctx, STATE_BACKWARD_3);
@@ -420,9 +424,9 @@ void FSM_Update(FSM_Context_t *ctx,
         if ((UL_Dis.Right <= 450) && (UL_Dis.Right >= 20))
         {
             *Base_Speed = UL_Dis.Right * 4 + 150;
-            *Vx1 = -(*Base_Speed);
-            *Vx2 = -(*Base_Speed);
-            Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
+            Vx1 = -(*Base_Speed);
+            Vx2 = -(*Base_Speed);
+            Motor_Analysis(0, 0, Vx1, Vx2, Wz);
             if (UL_Dis.Right >= 300)
             {
                 FSM_TRANSITION(ctx, STATE_FORWARD_LEFT_4);
@@ -439,7 +443,7 @@ void FSM_Update(FSM_Context_t *ctx,
         if (CNT < 16000)
         {
             *Base_Speed = 950;
-            drive_lateral_left_fwd_pid(*Base_Speed, 6.5f, 95, Wz, Vx1, Vx2);
+            drive_lateral_left_fwd_pid(*Base_Speed, 6.5f, 95, Wz);
             if (CNT > 11500)
             {  
                 FSM_TRANSITION(ctx, STATE_BRAKE_LEFT_4);
@@ -455,9 +459,9 @@ void FSM_Update(FSM_Context_t *ctx,
         *Lateral_Offset = 50;
         if (UL_Dis.Left > 10)
         {
-            *Vx1 = -(UL_Dis.Left * (*Lateral_Coeff) - (*Lateral_Offset));
-            *Vx2 = -(UL_Dis.Left * (*Lateral_Coeff) - (*Lateral_Offset));
-            Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
+            Vx1 = -(UL_Dis.Left * (*Lateral_Coeff) - (*Lateral_Offset));
+            Vx2 = -(UL_Dis.Left * (*Lateral_Coeff) - (*Lateral_Offset));
+            Motor_Analysis(0, 0, Vx1, Vx2, Wz);
             if (UL_Dis.Left <= Brake_Distance)
             {
                 FSM_TRANSITION(ctx, STATE_BACKWARD_4);
@@ -492,9 +496,9 @@ void FSM_Update(FSM_Context_t *ctx,
         if ((UL_Dis.Left <= 600) && (UL_Dis.Left >= 20))
         {
             *Base_Speed = UL_Dis.Left * 4 + 150;
-            *Vx1 = *Base_Speed;
-            *Vx2 = *Base_Speed;
-            Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
+            Vx1 = *Base_Speed;
+            Vx2 = *Base_Speed;
+            Motor_Analysis(0, 0, Vx1, Vx2, Wz);
             if (UL_Dis.Left >= 300)
             {
                 FSM_TRANSITION(ctx, STATE_FORWARD_RIGHT_5);
@@ -511,7 +515,7 @@ void FSM_Update(FSM_Context_t *ctx,
         if (CNT < 16000)
         {
             *Base_Speed = 950;
-            drive_lateral_right_fwd_pid(*Base_Speed, 6.5f, 95, Wz, Vx1, Vx2);
+            drive_lateral_right_fwd_pid(*Base_Speed, 6.5f, 95, Wz);
             if (CNT > 11500)
             {
                 FSM_TRANSITION(ctx, STATE_BRAKE_RIGHT_5);
@@ -527,9 +531,9 @@ void FSM_Update(FSM_Context_t *ctx,
         *Lateral_Offset = 50;
         if (UL_Dis.Right > 10)
         {
-            *Vx1 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
-            *Vx2 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
-            Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
+            Vx1 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
+            Vx2 = (UL_Dis.Right * (*Lateral_Coeff) - (*Lateral_Offset));
+            Motor_Analysis(0, 0, Vx1, Vx2, Wz);
             if (UL_Dis.Right <= Brake_Distance)
             {
                 FSM_TRANSITION(ctx, STATE_BACKWARD_5);
@@ -564,9 +568,9 @@ void FSM_Update(FSM_Context_t *ctx,
         if ((UL_Dis.Right <= 600) && (UL_Dis.Right >= 20))
         {
             *Base_Speed = UL_Dis.Right * 3 + 150;
-            *Vx1 = -(*Base_Speed);
-            *Vx2 = -(*Base_Speed);
-            Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
+            Vx1 = -(*Base_Speed);
+            Vx2 = -(*Base_Speed);
+            Motor_Analysis(0, 0, Vx1, Vx2, Wz);
             if (UL_Dis.Right >= 300)
             {
                 FSM_TRANSITION(ctx, STATE_FORWARD_LEFT_6);
@@ -585,20 +589,20 @@ void FSM_Update(FSM_Context_t *ctx,
             *Base_Speed = 950;
             if (UL_Dis.Forward <= 93)
             {
-                *Vx1 = -(*Base_Speed) + (6.5f * (95 - UL_Dis.Forward));
-                *Vx2 = -(*Base_Speed);
+                Vx1 = -(*Base_Speed) + (6.5f * (95 - UL_Dis.Forward));
+                Vx2 = -(*Base_Speed);
             }
             else if (UL_Dis.Forward >= 96)
             {
-                *Vx1 = -(*Base_Speed);
-                *Vx2 = -(*Base_Speed) - (6.5f * (95 - UL_Dis.Forward));
+                Vx1 = -(*Base_Speed);
+                Vx2 = -(*Base_Speed) - (6.5f * (95 - UL_Dis.Forward));
             }
             else
             {
-                *Vx1 = -(*Base_Speed);
-                *Vx2 = -(*Base_Speed);
+                Vx1 = -(*Base_Speed);
+                Vx2 = -(*Base_Speed);
             }
-            Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
+            Motor_Analysis(0, 0, Vx1, Vx2, Wz);
             if (CNT > 11500)
             {
                 FSM_TRANSITION(ctx, STATE_BRAKE_LEFT_6);
@@ -614,9 +618,9 @@ void FSM_Update(FSM_Context_t *ctx,
         *Lateral_Offset = 50;
         if (UL_Dis.Left > 10)
         {
-            *Vx1 = -(UL_Dis.Left * (*Lateral_Coeff) - (*Lateral_Offset));
-            *Vx2 = -(UL_Dis.Left * (*Lateral_Coeff) - (*Lateral_Offset));
-            Motor_Analysis(0, 0, *Vx1, *Vx2, Wz);
+            Vx1 = -(UL_Dis.Left * (*Lateral_Coeff) - (*Lateral_Offset));
+            Vx2 = -(UL_Dis.Left * (*Lateral_Coeff) - (*Lateral_Offset));
+            Motor_Analysis(0, 0, Vx1, Vx2, Wz);
             if (UL_Dis.Left <= (Brake_Distance + 50))
             {
                 FSM_TRANSITION(ctx, STATE_RETURN_HOME);

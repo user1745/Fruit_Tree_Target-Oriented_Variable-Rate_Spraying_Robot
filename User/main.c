@@ -1,32 +1,29 @@
 #include "sys.h"
 
-static int KEY = 0;
-
-static FSM_Context_t g_fsm; // 有限状态机上下文
-
-int Base_Speed = 900;
-
-float Lateral_Coeff;  // 横移刹车系数
-float Lateral_Offset; // 横移刹车偏置
-float Forward_Coeff;  // 直进刹车系数
-float Forward_Offset; // 直进刹车偏置
-
-int Reverse_Speed = -600;    // 后退车速
-int Reverse_Distance = 4580; // 后退距离
-int Brake_Distance = 220;    // 左右超声波刹车距离
-
-float pitch;
-float roll;
-float yaw;
-
-// static float Vy1;//Vy为正，前进；Vy为负，后退
-// static float Vy2;//Vy为正，前进；Vy为负，后退
-static float Vx1; // Vx设正，1、4轮子为负，2、3轮子为正，小车左移；Vx设负，1、4轮子为正，2、3轮子为负，小车右移。
-static float Vx2; // Vx设正，1、4轮子为负，2、3轮子为正，小车左移；Vx设负，1、4轮子为正，2、3轮子为负，小车右移。
-static float Wz;  // 角度
+static FSM_Context_t g_fsm = {STATE_IDLE, STATE_IDLE}; // 有限状态机上下文
 
 int main(void)
 {
+
+    u8 KEY = 0;
+
+    int Base_Speed = 900;
+
+    int Reverse_Speed = -600;    // 后退车速
+    int Reverse_Distance = 4580; // 后退距离
+    int Brake_Distance = 220;    // 左右超声波刹车距离
+
+    float pitch = 0.0f;
+    float roll = 0.0f;
+    float yaw = 0.0f;
+
+    float Lateral_Coeff = 1.0f;  // 横移刹车系数
+    float Lateral_Offset = 0.0f; // 横移刹车偏置
+    float Forward_Coeff = 1.0f;  // 直进刹车系数
+    float Forward_Offset = 0.0f; // 直进刹车偏置
+
+    float Wz = 0.0f;  // 角度
+
     Delay_init(168);
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
     Usart_init(); // 可修改预编译选择串口
@@ -94,7 +91,7 @@ int main(void)
         */
         if (KEY == 1)
         {
-            FSM_Update(&g_fsm, &Base_Speed, &Lateral_Coeff, &Lateral_Offset, &Forward_Coeff, &Forward_Offset, Reverse_Speed, Reverse_Distance, Brake_Distance, Wz, &Vx1, &Vx2);
+            FSM_Update(&g_fsm, &Base_Speed, &Lateral_Coeff, &Lateral_Offset, &Forward_Coeff, &Forward_Offset, Reverse_Speed, Reverse_Distance, Brake_Distance, Wz);
         }
     }
 }
