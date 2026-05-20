@@ -35,8 +35,5 @@
 *.build_log.htm binary
 Objects/** binary
 
-# Git hooks – must keep LF for shebang
-.githooks/** text eol=lf
-
 # Debugger / IDE config
 Debugconfig/** binary
