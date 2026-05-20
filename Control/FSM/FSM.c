@@ -1,27 +1,27 @@
-#include "sys.h"
+﻿#include "sys.h"
 #include "FSM.h"
+
+// static float Vy1; // Vy为正，前进；Vy为负，后退
+// static float Vy2; // Vy为正，前进；Vy为负，后退
+float Vx1 = 0.0f; // Vx设正，1、4轮子为负，2、3轮子为正，小车左移
+float Vx2 = 0.0f; // Vx设正，1、4轮子为负，2、3轮子为正，小车左移
 
 /**
  * @brief 电机输出控制安全限幅代理函数，限制最大目标速度，防止系统发生物理失控或过载烧毁。
  */
 static void Motor_Analysis_Safe(float Vy1, float Vy2, float Vx1, float Vx2, float Wz)
 {
-    if (Vy1 > 1000.0f) Vy1 = 1000.0f; else if (Vy1 < -1000.0f) Vy1 = -1000.0f;
-    if (Vy2 > 1000.0f) Vy2 = 1000.0f; else if (Vy2 < -1000.0f) Vy2 = -1000.0f;
-    if (Vx1 > 1000.0f) Vx1 = 1000.0f; else if (Vx1 < -1000.0f) Vx1 = -1000.0f;
-    if (Vx2 > 1000.0f) Vx2 = 1000.0f; else if (Vx2 < -1000.0f) Vx2 = -1000.0f;
-    if (Wz > 1000.0f) Wz = 1000.0f; else if (Wz < -1000.0f) Wz = -1000.0f;
+    if (Vy1 > 1000.0f) Vy1 = 1000.0f; else if (Vy1 < 0.0f) Vy1 = 0.0f;
+    if (Vy2 > 1000.0f) Vy2 = 1000.0f; else if (Vy2 < 0.0f) Vy2 = 0.0f;
+    if (Vx1 > 1000.0f) Vx1 = 1000.0f; else if (Vx1 < 0.0f) Vx1 = 0.0f;
+    if (Vx2 > 1000.0f) Vx2 = 1000.0f; else if (Vx2 < 0.0f) Vx2 = 0.0f;
+    if (Wz > 1000.0f) Wz = 1000.0f; else if (Wz < 0.0f) Wz = 0.0f;
     
     Motor_Analysis(Vy1, Vy2, Vx1, Vx2, Wz);
 }
 
 /* 使用宏重定向所有后续的 Motor_Analysis 调用，提供透明的安全保护屏障 */
 #define Motor_Analysis(vy1, vy2, vx1, vx2, wz) Motor_Analysis_Safe(vy1, vy2, vx1, vx2, wz)
-
-// static float Vy1; // Vy为正，前进；Vy为负，后退
-// static float Vy2; // Vy为正，前进；Vy为负，后退
-float Vx1 = 0.0f; // Vx设正，1、4轮子为负，2、3轮子为正，小车左移
-float Vx2 = 0.0f; // Vx设正，1、4轮子为负，2、3轮子为正，小车左移
 
 /**
  * @brief 状态转移：更新 ctx->previous / ctx->current，重置编码器
